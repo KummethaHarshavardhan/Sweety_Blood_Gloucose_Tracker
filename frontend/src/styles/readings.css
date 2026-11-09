@@ -1,0 +1,78 @@
+.filter-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-card .form-field {
+  margin-bottom: 0;
+  min-width: 170px;
+}
+
+.quick-ranges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reading-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.reading-form .modal-actions {
+  margin-top: 12px;
+}
+
+@media (max-width: 560px) {
+  .reading-table thead {
+    display: none;
+  }
+
+  .reading-table,
+  .reading-table tbody,
+  .reading-table tr,
+  .reading-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .reading-table tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .reading-table td {
+    border: none;
+    padding: 6px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .reading-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .actions-col {
+    justify-content: flex-end;
+  }
+
+  .actions-col::before {
+    content: none;
+  }
+
+  .actions-col .icon-btn:first-child {
+    margin-left: 0;
+  }
+
+  .filter-card .form-field {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+}

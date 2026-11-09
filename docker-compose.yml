@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:16
+    container_name: sweety-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
+      POSTGRES_DB: sweety_db
+    # Local-only database access. Do not expose PostgreSQL publicly in production.
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sweety_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sweety-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 7005
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/sweety_db?schema=public
+      TEST_DATABASE_URL: ""
+    ports:
+      - "127.0.0.1:7005:7005"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npm start"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:7005/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:7005}
+    container_name: sweety-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

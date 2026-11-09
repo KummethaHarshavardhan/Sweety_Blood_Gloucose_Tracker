@@ -1,0 +1,61 @@
+// Single source of truth for the database schema.
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TimeSlot {
+  MORNING
+  AFTER_BREAKFAST
+  AFTER_LUNCH
+  AFTER_DINNER
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String         @db.VarChar(100)
+  email         String         @unique @db.VarChar(150)
+  password      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  readings      Reading[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Reading {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readingDate  DateTime @db.Date
+  timeSlot     TimeSlot
+  glucoseValue Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // The unique index also serves lookups by userId + readingDate
+  @@unique([userId, readingDate, timeSlot])
+  @@map("readings")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  familyId   String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
